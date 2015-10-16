@@ -1,0 +1,96 @@
+<html>
+  <head>
+    <title>Online Judge</title>
+    <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css'>
+    <link rel='stylesheet' href="{{ url_for('static', filename='vendor/codemirror/codemirror.css') }}">
+  </head>
+  <body>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <div class='container'>
+      <div class='row'>
+        <h2>Problem List</h2>
+      </div>
+      <div class='row'>
+        <ul>
+          {% for problem in problems %}
+            <li class='well'>
+              <p class='lead'>{{ problem.title }}</p>
+              <p>{{ problem.text|safe }}</p>
+
+              <form method='POST' enctype='multipart/form-data'>
+                <legend>Your solution</legend>
+                <div class='form-group'>
+                  <label for='code'>Type the code here:</label>
+                  <textarea rows=10 name='code' class='form-control'></textarea>
+                </div>
+                <div class='form-group'>
+                  <label for='lang'>Language:</label>
+                  <select name='lang' class='form-control'>
+                    {% for lang in accepted_languages%}
+                    <option value='{{ lang }}'>{{ lang }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class='form-group'>
+                  <label for='submission'>If uploading file, make sure to specify the correct extension.</label>
+                  <input type='file' name='submission'>
+                </div>
+                <button type='submit' class='btn btn-primary'>Submit</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <script src="{{ url_for('static', filename='vendor/codemirror/codemirror.js')}}"></script>
+    <script src="{{ url_for('static', filename='vendor/codemirror/addon/mode/loadmode.js')}}"></script>
+    <script src="{{ url_for('static', filename='vendor/codemirror/mode/meta.js')}}"></script>
+    <script src="{{ url_for('static', filename='vendor/codemirror/mode/clike/clike.js')}}"></script>
+    <script src='https://code.jquery.com/jquery-2.1.4.min.js'></script>
+    <script>
+      (function () {
+        var codeTextAreas, editors, i, change;
+
+        CodeMirror.modeURL = "{{url_for('static', filename='vendor/codemirror/mode')}}" + '/%N/%N.js';
+
+        editors = [];
+
+        config = {
+          lineNumbers: true,
+          mode: 'clike' 
+        };
+
+        jQuery('textarea.form-control').each(function () {
+          editors.push({
+            element: this,
+            editor: CodeMirror.fromTextArea(this, config)
+          })
+        });
+      
+        jQuery('select.form-control').each(function () {
+          CodeMirror.on(this, 'change', function (e) {
+            change(this, e)
+          });
+        });
+
+        change = function (selectElem, e) {
+          var parentForm, closestTextarea, info, mode, spec, editor;
+
+          parentForm = $(selectElem).closest('form'); 
+          closestTextarea = $('textarea.form-control', parentForm)[0];
+          info = CodeMirror.findModeByExtension(e.target.value);
+          mode = info.mode;
+          spec = info.mime;
+
+          editor = editors.filter(function(editor) {
+              return (editor.element === closestTextarea);
+          })[0];
+
+          editor.editor.setOption('mode', spec);
+          CodeMirror.autoLoadMode(editor.editor, mode);
+        };
+
+      }());
+    </script>
+  </body>
+</html>
