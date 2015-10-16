@@ -1,4 +1,5 @@
 import os
+import requests
 
 from flask import (render_template, redirect, url_for, request, Blueprint)
 
@@ -22,9 +23,12 @@ def get_problems():
     ]
     return problems
 
-def run_tests(filename):
-    # Make a curl request to API
-    pass
+def run_tests(code, lang):
+    response = requests.post('http://smartypants.me:3000/test',
+                  headers={'Content-Type': 'application/json'},
+                  json={'code': code, 'email': 'temp@abc.com', 'language': lang, 'question': 1})
+    return response.text, 200
+
 
 @home_page.route('/', methods=['GET'])
 def home_get():
@@ -32,6 +36,7 @@ def home_get():
 
 @home_page.route('/', methods=['POST'])
 def home_post():
+    '''
     try:
         submission = request.files['submission']
     except KeyError:
@@ -46,7 +51,12 @@ def home_post():
     filename = secure_filename(submission.filename)
 
     submission.save(os.path.join(UPLOAD_FOLDER, filename))
+    '''
 
-    run_tests(os.path.join(UPLOAD_FOLDER, filename))
+    code = request.form['code']
 
-    return redirect(url_for('.home_get')) 
+    language = request.form['lang']
+
+    return run_tests(code, language)
+
+    #return redirect(url_for('.home_get')) 
