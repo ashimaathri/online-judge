@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from flask.sessions import SessionInterface, SessionMixin
 from werkzeug.datastructures import CallbackDict
-from db import db
+from online_judge.db import db
 
 class MongoSession(CallbackDict, SessionMixin):
 
@@ -51,10 +51,10 @@ class MongoSessionInterface(SessionInterface):
         expiration = self.get_expiration_time(app, session)
 
         if not expiration:
-            expiration = datatime.utcnow() + timedelta(hours=1)
+            expiration = datetime.utcnow() + timedelta(hours=1)
 
         self.store.update_one({'sid': session.sid},
-                              {'sid': session.sid, 'data': session, 'expiration': expiration},
+                              {'$set': {'sid': session.sid, 'data': session, 'expiration': expiration}},
                               True)
 
         response.set_cookie(app.session_cookie_name,

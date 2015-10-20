@@ -1,7 +1,9 @@
 import os
 import requests
 
-from flask import (render_template, redirect, url_for, request, Blueprint)
+from flask import (render_template, redirect, url_for, request, Blueprint, session)
+
+from online_judge.helpers.session import login_required
 
 ALLOWED_EXTENSIONS = ['c', 'py', 'php']
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +19,7 @@ def secure_filename(filename):
 
 def get_problems():
     problems = [
-        {'title': 'Problem 1', 'text': 'Problem 1', 'id': 'Problem1'},
+            {'title': 'Problem 1', 'text': '<p>Create a program to double the text in a file.</p><p><strong>Input: </strong>1 2 3 4</p><p><strong>Output: </strong>11 22 33 44</p>', 'id': 'Problem1'},
         {'title': 'Problem 2', 'text': 'Problem 2', 'id': 'Problem2'},
         {'title': 'Problem 3', 'text': 'Problem 3', 'id': 'Problem3'}
     ]
@@ -31,11 +33,13 @@ def run_tests(code, lang):
 
 
 @home_page.route('/', methods=['GET'])
-def home_get():
-    return render_template('home.html', problems=get_problems(), accepted_languages=ALLOWED_EXTENSIONS)
+@login_required
+def display_problem_list():
+    return render_template('home.html', problems=get_problems(), accepted_languages=ALLOWED_EXTENSIONS, username=session['username'])
 
 @home_page.route('/', methods=['POST'])
-def home_post():
+@login_required
+def submit_solution():
     '''
     try:
         submission = request.files['submission']

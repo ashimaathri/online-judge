@@ -1,8 +1,9 @@
-import bcrypt
 import hashlib
 
+import bcrypt
 from pymongo import MongoClient
-from db import db
+
+from online_judge.db import db
 
 user_collection = db['users']
 

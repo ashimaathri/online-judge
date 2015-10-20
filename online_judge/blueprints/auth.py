@@ -1,6 +1,8 @@
-from flask import (render_template, Blueprint, request, session)
+import json
+from flask import (render_template, Blueprint, request, session, current_app, redirect, url_for)
 
-from db.user import User
+from online_judge.db.user import User
+from online_judge.helpers.session import redirect_if_authenticated
 
 auth = Blueprint('auth', __name__)
 
@@ -10,16 +12,17 @@ def validate_form():
     error = None
 
     if not username:
-        error = 'Username absent'
+        error = json.dumps({'error': 'Username absent'})
 
     if not password:
-        error = 'Password absent', 400
+        error = json.dumps({'error': 'Password absent'})
 
     return username, password, error
 
 @auth.route('/', methods=['GET'])
+@redirect_if_authenticated
 def display_login_form():
-    return render_template('login_register.html', username=session.get('username'))
+    return render_template('login_register.html')
 
 @auth.route('/login', methods=['POST'])
 def login():
@@ -29,15 +32,18 @@ def login():
         return error, 400
     
     if not User.exists(username):
-        return 'Invalid credentials', 400
+        return json.dumps({'error': 'Invalid credentials'}), 400
 
     user = User(username)
 
     if user.verify(password):
         session['username'] = username
-        return 'Login successful', 200
+        try:
+            return redirect(request.args['next'])
+        except KeyError:
+            return redirect(url_for('home_page.display_problem_list'))
     else:
-        return 'Invalid Credentials', 400
+        return json.dumps({'error': 'Invalid credentials'}), 400
 
 @auth.route('/signup', methods=['POST'])
 def signup():
@@ -47,7 +53,13 @@ def signup():
         return error, 400
 
     if User.exists(username):
-        return 'Username exists', 400
+        return json.dumps({'error': 'Username exists'}), 400
     else:
         User(username, password).save()
-        return 'New user {} created'.format(username), 200
+        return json.dumps({'status': 'success'}), 200
+
+@auth.route('/logout', methods=['GET'])
+def logout():
+    current_app.session_interface.store.remove({'sid': session.sid})
+    session.clear()
+    return redirect(url_for('.display_login_form'))

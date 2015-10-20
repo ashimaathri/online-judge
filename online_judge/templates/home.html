@@ -8,10 +8,11 @@
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <div class='container'>
       <div class='row'>
+        <p class='pull-right'>{{ username }} | <a href="{{url_for('auth.logout')}}">Logout</a></p>
         <h2>Problem List</h2>
       </div>
       <div class='row'>
-        <ul>
+        <ul class='list-unstyled'>
           {% for problem in problems %}
             <li class='well'>
               <p class='lead'>{{ problem.title }}</p>
